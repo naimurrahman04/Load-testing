@@ -13,3 +13,5 @@ create a file called urls.txt
 #To run
 
 python ltest.py
+
+![response_time_distribution](https://user-images.githubusercontent.com/59091676/222424706-cf57bb7a-3f63-4b9f-803f-5e3ea7220de2.png)
