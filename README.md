@@ -13,5 +13,4 @@ create a file called urls.txt
 #To run
 
 python ltest.py
-
-![response_time_distribution](https://user-images.githubusercontent.com/59091676/222424706-cf57bb7a-3f63-4b9f-803f-5e3ea7220de2.png)
+<img width="1266" alt="Screenshot 2023-03-02 at 6 09 42 PM" src="https://user-images.githubusercontent.com/59091676/222424985-47e8692c-d46c-41b6-a572-923118539df9.png">![response_time_distribution](https://user-images.githubusercontent.com/59091676/222424706-cf57bb7a-3f63-4b9f-803f-5e3ea7220de2.png)
