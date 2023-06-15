@@ -11,15 +11,18 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
 with open('urls.txt', 'r') as f:
     urls = f.read().splitlines()
-start_time = time.time()
+
 num_requests = input("Enter the number of requests: ")
+disable_ssl_option = input("Disable SSL certificate verification? (1 for True, 2 for False): ")
+disable_ssl_verification = True if int(disable_ssl_option) == 1 else False
+start_time = time.time()
 
 def send_requests(url, good_response_times, bad_response_times):
     try:
         for i in range(int(num_requests)):
             request_time = datetime.datetime.now()
             start_time = time.time()
-            response = requests.get(url)
+            response = requests.get(url, verify=disable_ssl_verification)  # Enable or disable SSL certificate verification
             end_time = time.time()
             response_time = end_time - start_time
             response_time_category = ''
@@ -31,25 +34,25 @@ def send_requests(url, good_response_times, bad_response_times):
                 response_time_category = 'High'
             if response.status_code == 200:
                 good_response_times.append(response_time)
-                print(f'Good response time for {url} request {i+1} ({response_time_category}): {response_time:.2f} seconds')
+                print(f'Response code :{response.status_code}: {url} request {i+1} ({response_time_category}):{response_time:.2f} seconds')
             else:
                 bad_response_times.append(response_time)
-                print(f'Bad response time for {url} request {i+1} ({response_time_category}): {response_time:.2f} seconds')
+                print(f'Response code :{response.status_code}: {url} request {i+1} ({response_time_category}):{response_time:.2f} seconds')
     except Exception as e:
         print(f'Error occurred while sending request to {url}: {e}')
 
 
 total_good_response_times = []
 total_bad_response_times = []
-threads = []
+
 for url in urls:
     print(f'Testing URL: {url}')
     good_response_times = []
     bad_response_times = []
-    for i in range(10):
-        t = threading.Thread(target=send_requests, args=(url, good_response_times, bad_response_times))
-        threads.append(t)
-        t.start()
+    threads = []
+    t = threading.Thread(target=send_requests, args=(url, good_response_times, bad_response_times))
+    threads.append(t)
+    t.start()
     for t in threads:
         t.join()
     total_good_response_times.extend(good_response_times)
@@ -57,21 +60,19 @@ for url in urls:
 
 num_good_requests = len(total_good_response_times)
 num_bad_requests = len(total_bad_response_times)
-avg_good_response_time = statistics.mean(total_good_response_times) if num_good_requests > 0 else 0
-avg_bad_response_time = statistics.mean(total_bad_response_times) if num_bad_requests > 0 else 0
-avg_response_time = statistics.mean(total_good_response_times + total_bad_response_times)
-min_response_time = min(total_good_response_times + total_bad_response_times) if num_good_requests + num_bad_requests > 0 else 0
-max_response_time = max(total_good_response_times + total_bad_response_times) if num_good_requests + num_bad_requests > 0 else 0
-
-
+avg_good_response_time = statistics.mean(total_good_response_times) if total_good_response_times else 0
+avg_response_time = statistics.mean(total_good_response_times) if total_good_response_times else 0
+min_response_time = min(total_good_response_times) if total_good_response_times else 0
+max_response_time = max(total_good_response_times) if total_good_response_times else 0
 
 end_time = time.time()
 duration = end_time - start_time
 print(f'Testing completed in {duration:.2f} seconds.')
+
 # Categorizing response times
-low_response_times = [t for t in total_good_response_times + total_bad_response_times if t < 1]
-medium_response_times = [t for t in total_good_response_times + total_bad_response_times if 1 <= t < 5]
-high_response_times = [t for t in total_good_response_times + total_bad_response_times if t >= 5]
+low_response_times = [t for t in total_good_response_times if t < 1]
+medium_response_times = [t for t in total_good_response_times if 1 <= t < 5]
+high_response_times = [t for t in total_good_response_times if t >= 5]
 
 # Table for response time categories
 response_time_table_data = {
@@ -82,13 +83,13 @@ response_time_table = pd.DataFrame(response_time_table_data)
 
 # Table for request response times
 request_response_time_table_data = {
-    'Count': [num_good_requests, num_bad_requests],
-    'Average': [avg_good_response_time, avg_bad_response_time],
+    'Count': [num_good_requests],
+    'Average': [avg_good_response_time],
     'Minimum': [min_response_time],
     'Maximum': [max_response_time],
     'Overall Average': [avg_response_time]
 }
-request_response_time_table = pd.DataFrame(request_response_time_table_data, index=['Successful Requests', 'Failed Requests'])
+request_response_time_table = pd.DataFrame(request_response_time_table_data, index=['Successful Requests'])
 request_response_time_table.index.name = 'Request Status'
 
 # Set table styles
@@ -100,9 +101,8 @@ table_styles = [
     {'selector': 'img', 'props': [('max-width', '100%'), ('height', 'auto')]}
 ]
 
-
 # Create histogram of response times
-plt.hist(total_good_response_times + total_bad_response_times, bins=10)
+plt.hist(total_good_response_times, bins=10)
 plt.xlabel('Response Time (s)')
 plt.ylabel('Count')
 plt.title('Response Time Distribution')
